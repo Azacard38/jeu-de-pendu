@@ -17,7 +17,20 @@ let score = 0;
 let scoreAide = 0; // Score d'aide
 let lettresAide = 0; // Nombre de lettres trouvées grâce à l'aide
 
+// Valeurs réglables pour le calcul du score
+let reglagesScore = {
+    bonus0: 0,      // Bonus ajouté à la victoire si 0% d'aide utilisée
+    bonus50: -6,    // Bonus ajouté à la victoire si 50% d'aide utilisée
+    bonus100: -10,  // Bonus ajouté à la victoire si 100% d'aide utilisée
+    malus0: 2,      // Malus ajouté à la défaite si 0% d'aide utilisée
+    malus50: -7,    // Malus ajouté à la défaite si 50% d'aide utilisée
+    malus100: -8,   // Malus ajouté à la défaite si 100% d'aide utilisée
+    baseWin: 5,     // Score de base ajouté à la victoire (avant bonus)
+    baseLose: -4,   // Score de base ajouté à la défaite (avant malus)
+};
+
 function choisirMot() {
+    // Choisit un mot au hasard et réinitialise l'état du jeu (sauf le score général)
     if (!motsData.length) {
         document.getElementById("mot-secret").textContent = "Aucun mot disponible.";
         return;
@@ -29,9 +42,9 @@ function choisirMot() {
     lettresJouees = [];
     essaisRestants = 7;
     jeuTermine = false;
-    // score = 0; // Ne réinitialise plus le score ici
-    scoreAide = 0; // Réinitialise le score d'aide
-    lettresAide = 0; // Réinitialise le compteur d'aide
+    // score = 0; // Ne réinitialise plus le score ici pour garder le score global
+    scoreAide = 0; // Réinitialise le score d'aide pour la partie
+    lettresAide = 0; // Réinitialise le compteur de lettres trouvées avec l'aide
     majScore();
     majScoreAide();
     majPourcentageAide();
@@ -511,48 +524,69 @@ function afficherAnimationDefaite() {
 }
 
 function calculerBonusAide(pourc) {
-    // pourc = 0 => +5 si gagne, -4 si perd
-    // pourc = 50 => 0 si gagne, -7 si perd
-    // pourc = 100 => -8 si gagne, -8 si perd
-    // Interpolation linéaire
+    // Calcule le bonus/malus en fonction du pourcentage d'aide utilisée
+    // Interpolation linéaire entre les valeurs réglables
     let bonus, malus;
     if (pourc <= 50) {
-        bonus = 5 - (pourc / 50) * 5; // de 5 à 0
-        malus = -4 - (pourc / 50) * 3; // de -4 à -7
+        // Entre 0% et 50% d'aide
+        bonus = reglagesScore.bonus0 + (reglagesScore.bonus50 - reglagesScore.bonus0) * (pourc / 50);
+        malus = reglagesScore.malus0 + (reglagesScore.malus50 - reglagesScore.malus0) * (pourc / 50);
     } else {
-        bonus = 0 - ((pourc - 50) / 50) * 8; // de 0 à -8
-        malus = -7 - ((pourc - 50) / 50) * 1; // de -7 à -8
+        // Entre 50% et 100% d'aide
+        bonus = reglagesScore.bonus50 + (reglagesScore.bonus100 - reglagesScore.bonus50) * ((pourc - 50) / 50);
+        malus = reglagesScore.malus50 + (reglagesScore.malus100 - reglagesScore.malus50) * ((pourc - 50) / 50);
     }
-    // Clamp les valeurs
-    if (bonus < -8) bonus = -8;
-    if (malus < -8) malus = -8;
+    // Clamp pour éviter de dépasser les bornes
+    if (bonus < reglagesScore.bonus100) bonus = reglagesScore.bonus100;
+    if (bonus > reglagesScore.bonus0) bonus = reglagesScore.bonus0;
+    if (malus < reglagesScore.malus100) malus = reglagesScore.malus100;
+    if (malus > reglagesScore.malus0) malus = reglagesScore.malus0;
     return { bonus: Math.round(bonus), malus: Math.round(malus) };
 }
 
 function verifierFin() {
+    // Vérifie si la partie est gagnée ou perdue et applique le score de base + bonus/malus
     let total = motSecret.length;
     let pourc = total > 0 ? (lettresAide / total) * 100 : 0;
     let { bonus, malus } = calculerBonusAide(pourc);
 
+    // Score avant bonus/malus (pour affichage)
+    let scoreAvant = score;
+
     if (motSecret.split("").every(l => lettresTrouvees.includes(l))) {
-        score += bonus; // Score ajusté selon l'aide
+        // Victoire
+        score += reglagesScore.baseWin; // Ajoute le score de base victoire
+        let scoreAvantBonus = score;
+        score += bonus; // Ajoute le bonus/malus selon l'aide
         majScore();
         scoreAide = 0;
         lettresAide = 0;
         majScoreAide();
         majPourcentageAide();
-        document.getElementById("message").textContent = "Bravo, tu as gagné ! (Bonus : " + bonus + ")";
+        // Affiche le détail du score dans le message
+        document.getElementById("message").textContent =
+            "Bravo, tu as gagné ! (Score de base : " + reglagesScore.baseWin +
+            ", Score avant bonus : " + scoreAvantBonus.toFixed(1) +
+            ", Bonus : " + bonus + ")";
         jeuTermine = true;
         document.getElementById("rejouer").style.display = "inline-block";
         afficherAnimationVictoire();
     } else if (essaisRestants === 0) {
-        score += malus; // Score ajusté selon l'aide (malus est négatif)
+        // Défaite
+        score += reglagesScore.baseLose; // Ajoute le score de base défaite
+        let scoreAvantMalus = score;
+        score += malus; // Ajoute le bonus/malus selon l'aide
         majScore();
         scoreAide = 0;
         lettresAide = 0;
         majScoreAide();
         majPourcentageAide();
-        document.getElementById("message").textContent = "Perdu ! Le mot était : " + motSecret + " (Malus : " + malus + ")";
+        // Affiche le détail du score dans le message
+        document.getElementById("message").textContent =
+            "Perdu ! Le mot était : " + motSecret +
+            " (Score de base : " + reglagesScore.baseLose +
+            ", Score avant malus : " + scoreAvantMalus.toFixed(1) +
+            ", Malus : " + malus + ")";
         jeuTermine = true;
         document.getElementById("rejouer").style.display = "inline-block";
         afficherAnimationDefaite();
@@ -569,7 +603,7 @@ function afficherAide() {
         if (!lettresJouees.includes(lettreAide)) {
             lettresJouees.push(lettreAide);
         }
-        score -= 0.5; // -0.5 si on demande de l'aide
+        // score -= 0.5; // Retiré : ne perds plus de point avec l'aide
         scoreAide += 0.5; // +0.5 au score d'aide
         lettresAide += 1; // +1 lettre trouvée grâce à l'aide
         majScore();
@@ -710,9 +744,24 @@ window.addEventListener("DOMContentLoaded", function() {
             majScore();
         };
 
+        // Bouton pour ouvrir le panneau de réglages score
+        const btnReglageScore = document.createElement("button");
+        btnReglageScore.id = "btn-reglage-score";
+        btnReglageScore.textContent = "Réglages score";
+        btnReglageScore.style.padding = "18px 22px";
+        btnReglageScore.style.fontSize = "1.2em";
+        btnReglageScore.style.borderRadius = "10px";
+        btnReglageScore.style.background = "#fffde7";
+        btnReglageScore.style.border = "2px solid #ffe082";
+        btnReglageScore.style.cursor = "pointer";
+        btnReglageScore.onclick = function() {
+            ouvrirPanelReglageScore();
+        };
+
         leftPanel.appendChild(btnErreur);
         leftPanel.appendChild(btnWin);
         leftPanel.appendChild(btnResetScore);
+        leftPanel.appendChild(btnReglageScore);
         document.body.appendChild(leftPanel);
 
         // Ajout du petit bouton flottant pour afficher/masquer le panneau
@@ -744,4 +793,65 @@ window.addEventListener("DOMContentLoaded", function() {
             document.body.appendChild(toggleBtn);
         }
     }
+    // ...existing code...
 });
+
+// Panneau flottant de réglages score
+function ouvrirPanelReglageScore() {
+    // Crée et affiche le panneau flottant pour régler les valeurs de score
+    if (document.getElementById("panel-reglage-score")) {
+        document.getElementById("panel-reglage-score").style.display = "block";
+        return;
+    }
+    const panel = document.createElement("div");
+    panel.id = "panel-reglage-score";
+    panel.style.position = "fixed";
+    panel.style.top = "80px";
+    panel.style.left = "50%";
+    panel.style.transform = "translateX(-50%)";
+    panel.style.background = "#fffde7";
+    panel.style.border = "2px solid #ffe082";
+    panel.style.borderRadius = "16px";
+    panel.style.padding = "28px 32px";
+    panel.style.zIndex = "999";
+    panel.style.boxShadow = "0 4px 24px #0003";
+    panel.style.minWidth = "340px";
+    panel.style.fontSize = "1.1em";
+
+    // Ajoute les champs pour régler tous les paramètres de score
+    panel.innerHTML = `
+        <div style="font-weight:bold;font-size:1.3em;margin-bottom:18px;">Réglages du score (bonus/malus)</div>
+        <label>Score de base victoire : <input id="input-baseWin" type="number" value="${reglagesScore.baseWin}" style="width:60px"></label><br>
+        <label>Score de base défaite : <input id="input-baseLose" type="number" value="${reglagesScore.baseLose}" style="width:60px"></label><br>
+        <label>Bonus victoire (0% aide): <input id="input-bonus0" type="number" value="${reglagesScore.bonus0}" style="width:60px"></label><br>
+        <label>Bonus victoire (50% aide): <input id="input-bonus50" type="number" value="${reglagesScore.bonus50}" style="width:60px"></label><br>
+        <label>Bonus victoire (100% aide): <input id="input-bonus100" type="number" value="${reglagesScore.bonus100}" style="width:60px"></label><br>
+        <label>Malus défaite (0% aide): <input id="input-malus0" type="number" value="${reglagesScore.malus0}" style="width:60px"></label><br>
+        <label>Malus défaite (50% aide): <input id="input-malus50" type="number" value="${reglagesScore.malus50}" style="width:60px"></label><br>
+        <label>Malus défaite (100% aide): <input id="input-malus100" type="number" value="${reglagesScore.malus100}" style="width:60px"></label><br>
+        <div style="margin-top:18px;display:flex;gap:12px;">
+            <button id="btn-save-reglage-score" style="padding:8px 18px;border-radius:8px;background:#e0f2f1;border:1px solid #26a69a;cursor:pointer;">Enregistrer</button>
+            <button id="btn-close-reglage-score" style="padding:8px 18px;border-radius:8px;background:#ffe0e0;border:1px solid #e57373;cursor:pointer;">Fermer</button>
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    // Ferme le panneau sans enregistrer
+    document.getElementById("btn-close-reglage-score").onclick = function() {
+        panel.style.display = "none";
+    };
+
+    // Enregistre les nouvelles valeurs dans reglagesScore
+    document.getElementById("btn-save-reglage-score").onclick = function() {
+        reglagesScore.baseWin = parseInt(document.getElementById("input-baseWin").value, 10);
+        reglagesScore.baseLose = parseInt(document.getElementById("input-baseLose").value, 10);
+        reglagesScore.bonus0 = parseInt(document.getElementById("input-bonus0").value, 10);
+        reglagesScore.bonus50 = parseInt(document.getElementById("input-bonus50").value, 10);
+        reglagesScore.bonus100 = parseInt(document.getElementById("input-bonus100").value, 10);
+        reglagesScore.malus0 = parseInt(document.getElementById("input-malus0").value, 10);
+        reglagesScore.malus50 = parseInt(document.getElementById("input-malus50").value, 10);
+        reglagesScore.malus100 = parseInt(document.getElementById("input-malus100").value, 10);
+        panel.style.display = "none";
+    };
+}
