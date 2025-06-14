@@ -29,12 +29,12 @@ function choisirMot() {
     lettresJouees = [];
     essaisRestants = 7;
     jeuTermine = false;
-    score = 0;
+    // score = 0; // Ne réinitialise plus le score ici
     scoreAide = 0; // Réinitialise le score d'aide
     lettresAide = 0; // Réinitialise le compteur d'aide
     majScore();
-    majScoreAide(); // Met à jour l'affichage du score d'aide
-    majPourcentageAide(); // Met à jour l'affichage du pourcentage d'aide
+    majScoreAide();
+    majPourcentageAide();
     document.getElementById("message").textContent = "";
     document.getElementById("rejouer").style.display = "none";
     // Affiche la description brève
@@ -695,8 +695,24 @@ window.addEventListener("DOMContentLoaded", function() {
             }
         };
 
+        // Bouton pour réinitialiser le score
+        const btnResetScore = document.createElement("button");
+        btnResetScore.id = "btn-reset-score";
+        btnResetScore.textContent = "Réinitialiser le score";
+        btnResetScore.style.padding = "18px 22px";
+        btnResetScore.style.fontSize = "1.2em";
+        btnResetScore.style.borderRadius = "10px";
+        btnResetScore.style.background = "#e3f2fd";
+        btnResetScore.style.border = "2px solid #90caf9";
+        btnResetScore.style.cursor = "pointer";
+        btnResetScore.onclick = function() {
+            score = 0;
+            majScore();
+        };
+
         leftPanel.appendChild(btnErreur);
         leftPanel.appendChild(btnWin);
+        leftPanel.appendChild(btnResetScore);
         document.body.appendChild(leftPanel);
 
         // Ajout du petit bouton flottant pour afficher/masquer le panneau
