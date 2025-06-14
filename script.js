@@ -39,10 +39,9 @@ function choisirMot() {
         const motSecretDiv = document.getElementById("mot-secret");
         if (motSecretDiv) motSecretDiv.parentNode.insertBefore(descDiv, motSecretDiv);
     }
-    descDiv.textContent = "\u00A0"; // Espace insécable pour garder la hauteur même cachée
-    descDiv.style.display = "block";
-    descDiv.style.visibility = "hidden";
-    descDiv.style.minHeight = "1.7em"; // Hauteur minimale pour éviter le déplacement
+    descDiv.textContent = ""; // Masque la description au départ
+    descDiv.style.display = "block"; // Toujours "block" pour garder la place
+    descDiv.style.visibility = "hidden"; // Cache le texte sans déplacer le reste
 
     // Ajoute le bouton pour afficher/masquer la description si pas déjà présent
     if (!document.getElementById("btn-description")) {
@@ -60,12 +59,12 @@ function choisirMot() {
         btnDesc.onmouseout = function() { btnDesc.style.background = "#f5f5f5"; };
         btnDesc.onclick = function() {
             if (descDiv.style.visibility === "hidden") {
-                descDiv.textContent = descriptionMotSecret || "\u00A0";
+                descDiv.textContent = descriptionMotSecret || "";
                 descDiv.style.visibility = "visible";
                 btnDesc.textContent = "Masquer la description";
             } else {
                 descDiv.style.visibility = "hidden";
-                descDiv.textContent = "\u00A0";
+                descDiv.textContent = "";
                 btnDesc.textContent = "Afficher la description";
             }
         };
@@ -104,12 +103,12 @@ function choisirMot() {
         btnDesc.textContent = "Afficher la description";
         btnDesc.onclick = function() {
             if (descDiv.style.visibility === "hidden") {
-                descDiv.textContent = descriptionMotSecret || "\u00A0";
+                descDiv.textContent = descriptionMotSecret || "";
                 descDiv.style.visibility = "visible";
                 btnDesc.textContent = "Masquer la description";
             } else {
                 descDiv.style.visibility = "hidden";
-                descDiv.textContent = "\u00A0";
+                descDiv.textContent = "";
                 btnDesc.textContent = "Afficher la description";
             }
         };
@@ -177,7 +176,6 @@ function verifierLettre(lettre) {
 function dessinerPendu() {
     const penduDiv = document.getElementById("pendu-drawing");
     if (!penduDiv) return;
-    // Version emoji du pendu
     const etapes = [
 `    +-----------+
     |           |
@@ -189,7 +187,7 @@ function dessinerPendu() {
     =======================`,
 `    +-----------+
     |           |
-    😀           |
+    O           |
                 |
                 |
                 |
@@ -197,23 +195,15 @@ function dessinerPendu() {
     =======================`,
 `    +-----------+
     |           |
-    😀           |
-    |           |
+    O           |
+   /            |
                 |
                 |
                 |
     =======================`,
 `    +-----------+
     |           |
-    😀           |
-   /|           |
-                |
-                |
-                |
-    =======================`,
-`    +-----------+
-    |           |
-    😀           |
+    O           |
    /|\\          |
                 |
                 |
@@ -221,7 +211,7 @@ function dessinerPendu() {
     =======================`,
 `    +-----------+
     |           |
-    😀           |
+    O           |
    /|\\          |
    /            |
                 |
@@ -229,7 +219,7 @@ function dessinerPendu() {
     =======================`,
 `    +-----------+
     |           |
-    😀           |
+    O           |
    /|\\          |
    / \\          |
                 |
@@ -237,11 +227,11 @@ function dessinerPendu() {
     =======================`,
 `    +-----------+
     |           |
-    😵           |
+    O           |
    /|\\          |
    / \\          |
-                |
-                |
+   _ _          |
+  /   \\         |
     =======================`
     ];
     const erreurs = 7 - essaisRestants;
@@ -262,11 +252,11 @@ function dessinerPendu() {
 function afficherAnimationVictoire() {
     const penduDiv = document.getElementById("pendu-drawing");
     if (!penduDiv) return;
-    // Animation : pendu qui danse avec des emojis 🎉😃🕺
+    // Animation : le pendu saute, fait la fête, puis salue (smiley à droite)
     const frames = [
 `    +-----------+
     |           |
-    😀           |
+    O           |
    /|\\          |
    / \\          |
                 |
@@ -274,67 +264,67 @@ function afficherAnimationVictoire() {
     =======================`,
 `    +-----------+
     |           |
-   🕺           |
-   /|\\          |
+   \\O/          |
+    |           |
    / \\          |
                 |
                 |
     =======================`,
 `    +-----------+
     |           |
-   🕺           |
-   /|\\          |
+   \\O/          |
+    |           |
    / \\          |
-   🎉           |
+                |
                 |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
+   \\O/          |
+    |           |
    / \\          |
-   🎉  🎉        |
+                |    ^_^
                 |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
+   \\O/          |
+    |           |
    / \\          |
-   🎉  🎉        |
-   🥳           |
+                |   \\^_^/
+                |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
+   \\O/          |
+    |           |
    / \\          |
-   🎉  🎉        |
-   🥳  🎉        |
+                |    ^_^
+                |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
+   \\O           |
+    |\\          |
    / \\          |
-   🎉  🎉        |
-   🥳  🎉  🎉    |
+                |    ^_^
+                |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
-   / \\          |
-   🎉  🎉  🎉    |
-   🥳  🎉  🎉    |
+    O/          |
+   /|           |
+   / \\         |
+                |    ^_^
+                |
     =======================`,
 `    +-----------+
     |           |
-   😃           |
-  \\|/          |
+   \\O/          |
+    |           |
    / \\          |
-   🎉  🎉  🎉    |
-   🥳  🎉  🎉    |   BRAVO !
+                |    o/
+                |
     =======================`
     ];
     let i = 0;
@@ -342,7 +332,7 @@ function afficherAnimationVictoire() {
         if (i < frames.length) {
             penduDiv.innerHTML = `<pre style="text-align:left;display:inline-block;font-size:2.8em;line-height:1.1;background:#fffbe6;padding:32px 48px;border-radius:18px;box-shadow:0 2px 12px #0002;margin:0;min-height:320px;width:520px;">${frames[i]}</pre>`;
             i++;
-            setTimeout(animate, 180);
+            setTimeout(animate, 220);
         }
     }
     animate();
@@ -351,11 +341,11 @@ function afficherAnimationVictoire() {
 function afficherAnimationDefaite() {
     const penduDiv = document.getElementById("pendu-drawing");
     if (!penduDiv) return;
-    // Animation : pendu triste, tête tombe, croix et 💀/❌/😵
+    // Animation : la tête tombe, le corps se penche, puis "GAME OVER" avec effet de disparition et croix
     const frames = [
 `    +-----------+
     |           |
-    😐           |
+    O           |
    /|\\          |
    / \\          |
                 |
@@ -363,59 +353,42 @@ function afficherAnimationDefaite() {
     =======================`,
 `    +-----------+
     |           |
-    😵           |
+   ( )          |
    /|\\          |
    / \\          |
                 |
-                |
-    =======================`,
-`    +-----------+
-    |           |
-    💀           |
-   /|\\          |
-   / \\          |
-                |
-                |
+    O           |
     =======================`,
 `    +-----------+
     |           |
                 |
    /|\\          |
    / \\          |
-    💀           |
                 |
+   ( )          |
     =======================`,
 `    +-----------+
     |           |
                 |
    /|           |
    / \\          |
-    💀           |
                 |
+   ( )          |
     =======================`,
 `    +-----------+
     |           |
                 |
                 |
    /            |
-    💀           |
                 |
+   ( )          |
     =======================`,
 `    +-----------+
     |           |
                 |
                 |
                 |
-    💀           |
-   ❌❌❌❌❌❌❌ |
-    =======================`,
-`    +-----------+
-    |           |
                 |
-                |
-                |
-    💀           |
-   ❌❌❌❌❌❌❌ |
    GAME OVER    |
     =======================`,
 `    +-----------+
@@ -423,8 +396,7 @@ function afficherAnimationDefaite() {
                 |
                 |
                 |
-    💀           |
-   ❌❌❌❌❌❌❌ |
+                |
    GAME OVER    |
     =======================`,
 `    +-----------+
@@ -432,22 +404,16 @@ function afficherAnimationDefaite() {
                 |
                 |
                 |
-    💀           |
-   ❌❌❌❌❌❌❌ |
-   GAME OVER    |
+                |
+   X X X X X X  |
     =======================`
     ];
     let i = 0;
     function animate() {
         if (i < frames.length) {
-            let content = frames[i];
-            // Clignotement du "GAME OVER" sur les dernières frames
-            if (i >= frames.length - 3 && i % 2 === 1) {
-                content = content.replace("GAME OVER", "          ");
-            }
-            penduDiv.innerHTML = `<pre style="text-align:left;display:inline-block;font-size:2.8em;line-height:1.1;background:#fffbe6;padding:32px 48px;border-radius:18px;box-shadow:0 2px 12px #0002;margin:0;min-height:320px;width:520px;">${content}</pre>`;
+            penduDiv.innerHTML = `<pre style="text-align:left;display:inline-block;font-size:2.8em;line-height:1.1;background:#fffbe6;padding:32px 48px;border-radius:18px;box-shadow:0 2px 12px #0002;margin:0;min-height:320px;width:520px;">${frames[i]}</pre>`;
             i++;
-            setTimeout(animate, 220);
+            setTimeout(animate, 300);
         }
     }
     animate();
