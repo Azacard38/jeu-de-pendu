@@ -1,11 +1,11 @@
 const motsData = [
-    { mot: "MACHINE", description: "machine complexe pour effectuer des tâches." },
-    { mot: "JAVASCRIPT", description: "Langage de programmation du web." },
-    { mot: "FROMAGE", description: "Aliment issu du lait." },
-    { mot: "VOITURE", description: "Moyen de transport à quatre roues." },
-    { mot: "CHOCOLAT", description: "Friandise à base de cacao." },
-    { mot: "MONTAGNE", description: "Relief naturel élevé." },
-    { mot: "PUZZLE", description: "Jeu où il faut assembler des pièces." }
+    { mot: "FILTRE", description: "Nom d'un live." },
+    { mot: "SAM", description: "Nom du personnage principal (très simple ;) )" },
+    { mot: "LILOU", description: "Nom du personnage secondaire" },
+    { mot: "PRIXROMANFILE", description: "attribu prestigieux attribué à un roman" },
+    { mot: "DEVILFILTERMAKER", description: "Nom du - pas gentil - " },
+    { mot: "FLORENCEHINCKEL", description: "la créatrice" },
+    { mot: "EDITIONNATHAN", description: "no description" }
 ];
 let motSecret = "";
 let descriptionMotSecret = "";
