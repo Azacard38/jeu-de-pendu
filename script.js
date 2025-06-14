@@ -13,6 +13,9 @@ let lettresTrouvees = [];
 let lettresJouees = [];
 let essaisRestants = 7;
 let jeuTermine = false;
+let score = 0;
+let scoreAide = 0; // Score d'aide
+let lettresAide = 0; // Nombre de lettres trouvées grâce à l'aide
 
 function choisirMot() {
     if (!motsData.length) {
@@ -26,6 +29,12 @@ function choisirMot() {
     lettresJouees = [];
     essaisRestants = 7;
     jeuTermine = false;
+    score = 0;
+    scoreAide = 0; // Réinitialise le score d'aide
+    lettresAide = 0; // Réinitialise le compteur d'aide
+    majScore();
+    majScoreAide(); // Met à jour l'affichage du score d'aide
+    majPourcentageAide(); // Met à jour l'affichage du pourcentage d'aide
     document.getElementById("message").textContent = "";
     document.getElementById("rejouer").style.display = "none";
     // Affiche la description brève
@@ -39,8 +48,8 @@ function choisirMot() {
         const motSecretDiv = document.getElementById("mot-secret");
         if (motSecretDiv) motSecretDiv.parentNode.insertBefore(descDiv, motSecretDiv);
     }
-    descDiv.textContent = ""; // Masque la description au départ
-    descDiv.style.display = "block"; // Toujours "block" pour garder la place
+    descDiv.textContent = "\u00B0"; // Espace insécable pour garder la hauteur même cachée
+    descDiv.style.display = "block";
     descDiv.style.visibility = "hidden"; // Cache le texte sans déplacer le reste
 
     // Ajoute le bouton pour afficher/masquer la description si pas déjà présent
@@ -59,12 +68,12 @@ function choisirMot() {
         btnDesc.onmouseout = function() { btnDesc.style.background = "#f5f5f5"; };
         btnDesc.onclick = function() {
             if (descDiv.style.visibility === "hidden") {
-                descDiv.textContent = descriptionMotSecret || "";
+                descDiv.textContent = descriptionMotSecret || "\u00A0";
                 descDiv.style.visibility = "visible";
                 btnDesc.textContent = "Masquer la description";
             } else {
                 descDiv.style.visibility = "hidden";
-                descDiv.textContent = "";
+                descDiv.textContent = "\u00A0";
                 btnDesc.textContent = "Afficher la description";
             }
         };
@@ -103,12 +112,12 @@ function choisirMot() {
         btnDesc.textContent = "Afficher la description";
         btnDesc.onclick = function() {
             if (descDiv.style.visibility === "hidden") {
-                descDiv.textContent = descriptionMotSecret || "";
+                descDiv.textContent = descriptionMotSecret || "\u00A0";
                 descDiv.style.visibility = "visible";
                 btnDesc.textContent = "Masquer la description";
             } else {
                 descDiv.style.visibility = "hidden";
-                descDiv.textContent = "";
+                descDiv.textContent = "\u00A0";
                 btnDesc.textContent = "Afficher la description";
             }
         };
@@ -116,6 +125,75 @@ function choisirMot() {
     afficherMot();
     dessinerPendu();
     genererClavier();
+}
+
+function majScore() {
+    let scoreDiv = document.getElementById("score");
+    if (!scoreDiv) {
+        scoreDiv = document.createElement("div");
+        scoreDiv.id = "score";
+        scoreDiv.style.fontSize = "2em";
+        scoreDiv.style.fontWeight = "bold";
+        scoreDiv.style.color = "#1976d2";
+        scoreDiv.style.margin = "18px auto 0 auto";
+        scoreDiv.style.maxWidth = "700px";
+        scoreDiv.style.textAlign = "center";
+        // Place le score en haut de la page (avant le mot secret)
+        const motSecretDiv = document.getElementById("mot-secret");
+        if (motSecretDiv && motSecretDiv.parentNode) {
+            motSecretDiv.parentNode.insertBefore(scoreDiv, motSecretDiv);
+        } else {
+            document.body.insertBefore(scoreDiv, document.body.firstChild);
+        }
+    }
+    scoreDiv.textContent = "Score : " + score.toFixed(1);
+}
+
+function majScoreAide() {
+    let aideDiv = document.getElementById("score-aide");
+    if (!aideDiv) {
+        aideDiv = document.createElement("div");
+        aideDiv.id = "score-aide";
+        aideDiv.style.fontSize = "1.5em";
+        aideDiv.style.fontWeight = "bold";
+        aideDiv.style.color = "#ff9800";
+        aideDiv.style.margin = "0 0 8px 0";
+        aideDiv.style.textAlign = "right";
+        // Place au-dessus des essais restants
+        const essaisDiv = document.getElementById("essais-restants");
+        if (essaisDiv && essaisDiv.parentNode) {
+            essaisDiv.parentNode.insertBefore(aideDiv, essaisDiv);
+        } else {
+            // Si essais-restants pas encore là, on l'ajoutera plus tard dans dessinerPendu
+        }
+    }
+    aideDiv.textContent = "Score d'aide : " + scoreAide.toFixed(1);
+    majPourcentageAide();
+}
+
+function majPourcentageAide() {
+    let pourcDiv = document.getElementById("score-pourc-aide");
+    if (!pourcDiv) {
+        pourcDiv = document.createElement("div");
+        pourcDiv.id = "score-pourc-aide";
+        pourcDiv.style.fontSize = "1.1em";
+        pourcDiv.style.fontWeight = "normal";
+        pourcDiv.style.color = "#ffb300";
+        pourcDiv.style.margin = "0 0 12px 0";
+        pourcDiv.style.textAlign = "right";
+        // Place juste après score-aide
+        const aideDiv = document.getElementById("score-aide");
+        if (aideDiv && aideDiv.parentNode) {
+            if (aideDiv.nextSibling) {
+                aideDiv.parentNode.insertBefore(pourcDiv, aideDiv.nextSibling);
+            } else {
+                aideDiv.parentNode.appendChild(pourcDiv);
+            }
+        }
+    }
+    let total = motSecret.length;
+    let pourc = total > 0 ? (lettresAide / total) * 100 : 0;
+    pourcDiv.textContent = "Pourcentage de lettres trouvées avec l'aide : " + pourc.toFixed(1) + "%";
 }
 
 function afficherMot() {
@@ -139,10 +217,10 @@ function genererClavier() {
         const btn = document.createElement("button");
         btn.textContent = lettre;
         btn.disabled = lettresJouees.includes(lettre) || jeuTermine;
-        btn.style.margin = "12px";
-        btn.style.padding = "24px 32px";
-        btn.style.fontSize = "2em";
-        btn.style.borderRadius = "14px";
+        btn.style.margin = "6px";
+        btn.style.padding = "20px 25px";
+        btn.style.fontSize = "1.5em";
+        btn.style.borderRadius = "10px";
         btn.style.border = "2px solid #bbb";
         btn.style.background = btn.disabled ? "#eee" : "#fff";
         btn.style.cursor = btn.disabled ? "not-allowed" : "pointer";
@@ -163,9 +241,13 @@ function verifierLettre(lettre) {
     if (motSecret.includes(lettre)) {
         if (!lettresTrouvees.includes(lettre)) {
             lettresTrouvees.push(lettre);
+            score += 1; // +1 pour une bonne lettre
+            majScore();
         }
     } else {
         essaisRestants--;
+        score -= 1; // -1 pour une mauvaise lettre
+        majScore();
     }
     afficherMot();
     dessinerPendu();
@@ -247,6 +329,7 @@ function dessinerPendu() {
         penduDiv.parentNode.insertBefore(essaisDiv, penduDiv.nextSibling);
     }
     document.getElementById("essais-restants").innerHTML = `Essais restants : <b>${essaisRestants}</b>`;
+    majScoreAide(); // Met à jour l'affichage du score d'aide à chaque dessin
 }
 
 function afficherAnimationVictoire() {
@@ -314,7 +397,7 @@ function afficherAnimationVictoire() {
     |           |
     O/          |
    /|           |
-   / \\         |
+   / \\          |
                 |    ^_^
                 |
     =======================`,
@@ -406,6 +489,14 @@ function afficherAnimationDefaite() {
                 |
                 |
    X X X X X X  |
+    =======================`,
+`    +-----------+
+    |           |
+                |
+                |
+                |
+                |
+   GAME OVER    |
     =======================`
     ];
     let i = 0;
@@ -419,14 +510,49 @@ function afficherAnimationDefaite() {
     animate();
 }
 
+function calculerBonusAide(pourc) {
+    // pourc = 0 => +5 si gagne, -4 si perd
+    // pourc = 50 => 0 si gagne, -7 si perd
+    // pourc = 100 => -8 si gagne, -8 si perd
+    // Interpolation linéaire
+    let bonus, malus;
+    if (pourc <= 50) {
+        bonus = 5 - (pourc / 50) * 5; // de 5 à 0
+        malus = -4 - (pourc / 50) * 3; // de -4 à -7
+    } else {
+        bonus = 0 - ((pourc - 50) / 50) * 8; // de 0 à -8
+        malus = -7 - ((pourc - 50) / 50) * 1; // de -7 à -8
+    }
+    // Clamp les valeurs
+    if (bonus < -8) bonus = -8;
+    if (malus < -8) malus = -8;
+    return { bonus: Math.round(bonus), malus: Math.round(malus) };
+}
+
 function verifierFin() {
+    let total = motSecret.length;
+    let pourc = total > 0 ? (lettresAide / total) * 100 : 0;
+    let { bonus, malus } = calculerBonusAide(pourc);
+
     if (motSecret.split("").every(l => lettresTrouvees.includes(l))) {
-        document.getElementById("message").textContent = "Bravo, tu as gagné !";
+        score += bonus; // Score ajusté selon l'aide
+        majScore();
+        scoreAide = 0;
+        lettresAide = 0;
+        majScoreAide();
+        majPourcentageAide();
+        document.getElementById("message").textContent = "Bravo, tu as gagné ! (Bonus : " + bonus + ")";
         jeuTermine = true;
         document.getElementById("rejouer").style.display = "inline-block";
         afficherAnimationVictoire();
     } else if (essaisRestants === 0) {
-        document.getElementById("message").textContent = "Perdu ! Le mot était : " + motSecret;
+        score += malus; // Score ajusté selon l'aide (malus est négatif)
+        majScore();
+        scoreAide = 0;
+        lettresAide = 0;
+        majScoreAide();
+        majPourcentageAide();
+        document.getElementById("message").textContent = "Perdu ! Le mot était : " + motSecret + " (Malus : " + malus + ")";
         jeuTermine = true;
         document.getElementById("rejouer").style.display = "inline-block";
         afficherAnimationDefaite();
@@ -443,6 +569,12 @@ function afficherAide() {
         if (!lettresJouees.includes(lettreAide)) {
             lettresJouees.push(lettreAide);
         }
+        score -= 0.5; // -0.5 si on demande de l'aide
+        scoreAide += 0.5; // +0.5 au score d'aide
+        lettresAide += 1; // +1 lettre trouvée grâce à l'aide
+        majScore();
+        majScoreAide();
+        majPourcentageAide();
         afficherMot();
         dessinerPendu();
         genererClavier();
@@ -480,6 +612,12 @@ window.addEventListener("DOMContentLoaded", function() {
         descDiv.style.maxWidth = "700px";
         descDiv.style.marginLeft = "auto";
         descDiv.style.marginRight = "auto";
+        descDiv.style.display = "block";
+        descDiv.style.minHeight = "2.2em"; // Toujours une hauteur pour éviter le déplacement
+        // Ajoute un espace insécable si la description est cachée
+        if (descDiv.style.visibility === "hidden" || !descDiv.textContent) {
+            descDiv.textContent = "\u00A0";
+        }
     }
     // Agrandit le bouton "Aide"
     const aideBtn = document.getElementById("aide");
