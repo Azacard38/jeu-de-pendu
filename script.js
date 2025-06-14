@@ -1,11 +1,11 @@
 const motsData = [
-    { mot: "FILTRE", description: "Nom d'un live." },
-    { mot: "SAM", description: "Nom du personnage principal (très simple ;) )" },
-    { mot: "LILOU", description: "Nom du personnage secondaire" },
-    { mot: "PRIXROMANFILE", description: "attribu prestigieux attribué à un roman" },
-    { mot: "DEVILFILTERMAKER", description: "Nom du - pas gentil - " },
-    { mot: "FLORENCEHINCKEL", description: "la créatrice" },
-    { mot: "EDITIONNATHAN", description: "no description" }
+    { mot: "FILTRE", description: "Nom d'un live.", ordre: 1 },
+    { mot: "SAM", description: "Nom du personnage principal (très simple ;) )", ordre: 2 },
+    { mot: "LILOU", description: "Nom du personnage secondaire", ordre: 3 },
+    { mot: "PRIXROMANFILE", description: "attribu prestigieux attribué à un roman", ordre: 4 },
+    { mot: "DEVILFILTERMAKER", description: "Nom de \"l'antagoniste\"", ordre: 5 },
+    { mot: "FLORENCEHINCKEL", description: "l'autrice", ordre: 6 },
+    { mot: "NATHAN", description: "editeur", ordre: 7 }
 ];
 let motSecret = "";
 let descriptionMotSecret = "";
@@ -33,6 +33,7 @@ let motIndex = 0; // Index du mot courant pour le mode ordre
 let ordreAleatoire = false; // false = ordre par défaut, true = aléatoire
 
 function choisirMot() {
+    normaliserOrdreMots();
     // Choisit un mot au hasard ou dans l'ordre et réinitialise l'état du jeu (sauf le score général)
     if (!motsData.length) {
         document.getElementById("mot-secret").textContent = "Aucun mot disponible.";
@@ -42,7 +43,9 @@ function choisirMot() {
     if (ordreAleatoire) {
         choix = motsData[Math.floor(Math.random() * motsData.length)];
     } else {
-        choix = motsData[motIndex % motsData.length];
+        // Trie par ordre avant de choisir dans l'ordre
+        const sorted = [...motsData].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+        choix = sorted[motIndex % sorted.length];
         motIndex++;
     }
     motSecret = choix.mot;
@@ -751,8 +754,10 @@ window.addEventListener("DOMContentLoaded", function() {
         btnResetScore.style.border = "2px solid #90caf9";
         btnResetScore.style.cursor = "pointer";
         btnResetScore.onclick = function() {
-            score = 0;
-            majScore();
+            if (confirm("Voulez-vous vraiment réinitialiser le score ?")) {
+                score = 0;
+                majScore();
+            }
         };
 
         // Bouton pour ouvrir le panneau de réglages score
@@ -821,7 +826,28 @@ window.addEventListener("DOMContentLoaded", function() {
             document.body.appendChild(toggleBtn);
         }
     }
-    // ...existing code...
+    // Ajoute un bouton flottant TOUJOURS visible pour accéder au menu de gestion des mots
+    if (!document.getElementById("btn-open-gestion-mots")) {
+        const btnOpenGestion = document.createElement("button");
+        btnOpenGestion.id = "btn-open-gestion-mots";
+        btnOpenGestion.textContent = "Gestion mots";
+        btnOpenGestion.style.position = "fixed";
+        btnOpenGestion.style.left = "10px";
+        btnOpenGestion.style.top = "60px";
+        btnOpenGestion.style.width = "120px";
+        btnOpenGestion.style.height = "40px";
+        btnOpenGestion.style.borderRadius = "12px";
+        btnOpenGestion.style.background = "#ffd54f";
+        btnOpenGestion.style.border = "2px solid #bbb";
+        btnOpenGestion.style.fontSize = "1.1em";
+        btnOpenGestion.style.cursor = "pointer";
+        btnOpenGestion.style.zIndex = "9999";
+        btnOpenGestion.style.boxShadow = "0 2px 8px #0002";
+        btnOpenGestion.onclick = function() {
+            ouvrirPanelGestionMots();
+        };
+        document.body.appendChild(btnOpenGestion);
+    }
 });
 
 // Panneau flottant de réglages score
@@ -882,4 +908,298 @@ function ouvrirPanelReglageScore() {
         reglagesScore.malus100 = parseInt(document.getElementById("input-malus100").value, 10);
         panel.style.display = "none";
     };
+}
+
+// Remplace la fonction ouvrirPanelGestionMots par une version complète et fonctionnelle :
+function ouvrirPanelGestionMots() {
+    normaliserOrdreMots();
+    let panel = document.getElementById("panel-gestion-mots");
+    if (panel) {
+        panel.style.display = "block";
+        if (typeof loadMotsData === "function") loadMotsData();
+        afficherListeMotsGestion();
+        setTimeout(() => {
+            const inputMot = document.getElementById("mot-gestion-mot");
+            if (inputMot) inputMot.focus();
+        }, 100);
+        return;
+    }
+    panel = document.createElement("div");
+    panel.id = "panel-gestion-mots";
+    panel.style.position = "fixed";
+    panel.style.top = "80px";
+    panel.style.left = "50%";
+    panel.style.transform = "translateX(-50%)";
+    panel.style.background = "#fffde7";
+    panel.style.border = "2px solid #ffe082";
+    panel.style.borderRadius = "16px";
+    panel.style.padding = "28px 32px";
+    panel.style.zIndex = "999";
+    panel.style.boxShadow = "0 4px 24px #0003";
+    panel.style.minWidth = "400px";
+    panel.style.fontSize = "1.1em";
+    panel.style.maxHeight = "80vh";
+    panel.style.overflowY = "auto";
+
+    panel.innerHTML = `
+        <div style="font-weight:bold;font-size:1.3em;margin-bottom:18px;">Gestion des mots</div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <button id="btn-export-mots" style="padding:6px 14px;border-radius:8px;background:#e0f2f1;border:1px solid #26a69a;cursor:pointer;">Exporter .TXT</button>
+            <button id="btn-import-mots" style="padding:6px 14px;border-radius:8px;background:#fffde7;border:1px solid #ffe082;cursor:pointer;">Importer .TXT</button>
+            <input type="file" id="input-import-mots" accept=".txt" style="display:none;">
+        </div>
+        <div id="gestion-mots-list"></div>
+        <hr style="margin:18px 0;">
+        <div style="font-weight:bold;margin-bottom:8px;">Ajouter / Modifier un mot</div>
+        <form id="form-mot-gestion">
+            <input id="mot-gestion-mot" type="text" placeholder="Mot" style="width:120px;margin-right:8px;" maxlength="32" required>
+            <input id="mot-gestion-desc" type="text" placeholder="Description" style="width:180px;margin-right:8px;" maxlength="64">
+            
+            <button type="submit" style="padding:6px 18px;border-radius:8px;background:#e0f2f1;border:1px solid #26a69a;cursor:pointer;">Enregistrer</button>
+            <button type="button" id="btn-annuler-mot" style="padding:6px 18px;border-radius:8px;background:#ffe0e0;border:1px solid #e57373;cursor:pointer;">Annuler</button>
+        </form>
+        <button id="btn-fermer-gestion-mots" style="margin-top:18px;padding:8px 18px;border-radius:8px;background:#ffe0e0;border:1px solid #e57373;cursor:pointer;">Fermer</button>
+    `;
+    document.body.appendChild(panel);
+
+    document.getElementById("btn-fermer-gestion-mots").onclick = function() {
+        panel.style.display = "none";
+    };
+
+    document.getElementById("btn-annuler-mot").onclick = function(e) {
+        e.preventDefault();
+        document.getElementById("mot-gestion-mot").value = "";
+        document.getElementById("mot-gestion-desc").value = "";
+
+        document.getElementById("mot-gestion-mot").disabled = false;
+    };
+
+    document.getElementById("form-mot-gestion").onsubmit = function(e) {
+        e.preventDefault();
+        const mot = document.getElementById("mot-gestion-mot").value.trim().toUpperCase();
+        const desc = document.getElementById("mot-gestion-desc").value.trim();
+
+        if (!mot) return;
+        // Vérifie si un autre mot a déjà ce numéro d'ordre
+        const idx = motsData.findIndex(m => m.mot === mot);
+        if (idx >= 0) {
+            // Modification
+            motsData[idx].description = desc;
+            motsData[idx].ordre = ordre;
+        } else {
+            // Ajout
+            motsData.push({ mot, description: desc });
+        }
+        // Si plusieurs mots ont le même ordre, renumérote pour éviter les doublons
+        let ordres = {};
+        motsData.forEach(m => {
+            if (ordres[m.ordre]) {
+                // Décale les suivants
+                let newOrdre = m.ordre;
+                while (ordres[newOrdre]) newOrdre++;
+                m.ordre = newOrdre;
+            }
+            ordres[m.ordre] = true;
+        });
+        if (typeof saveMotsData === "function") saveMotsData();
+        normaliserOrdreMots();
+        afficherListeMotsGestion();
+        document.getElementById("form-mot-gestion").reset();
+        document.getElementById("mot-gestion-mot").disabled = false;
+    };
+
+    // Ajout export/import
+    document.getElementById("btn-export-mots").onclick = function() {
+        // Format: ORDRE;MOT;DESCRIPTION (une ligne par mot)
+        const lignes = [...motsData]
+            .sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999))
+            .map(m => `${m.ordre};${m.mot};${(m.description||"").replace(/[\r\n;]/g, " ")}`);
+        const blob = new Blob([lignes.join("\n")], {type: "text/plain"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "mots_pendu.txt";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); }, 100);
+    };
+
+    document.getElementById("btn-import-mots").onclick = function() {
+        document.getElementById("input-import-mots").click();
+    };
+
+    document.getElementById("input-import-mots").onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const txt = ev.target.result;
+            const lignes = txt.split(/\r?\n/);
+            let nouveaux = [];
+            for (let ligne of lignes) {
+                if (!ligne.trim()) continue;
+                // ORDRE;MOT;DESCRIPTION
+                const parts = ligne.split(";");
+                if (parts.length < 2) continue;
+                const ordre = parseInt(parts[0], 10);
+                const mot = (parts[1] || "").trim().toUpperCase();
+                const description = (parts[2] || "").trim();
+                if (!mot || isNaN(ordre)) continue;
+                nouveaux.push({ mot, description, ordre });
+            }
+            if (nouveaux.length) {
+                if (confirm("Remplacer la liste actuelle par celle du fichier ? (OK = remplace, Annuler = ajoute)")) {
+                    motsData.length = 0;
+                }
+                // Ajoute ou remplace
+                for (let n of nouveaux) {
+                    const idx = motsData.findIndex(m => m.mot === n.mot);
+                    if (idx >= 0) {
+                        motsData[idx] = n;
+                    } else {
+                        motsData.push(n);
+                    }
+                }
+                normaliserOrdreMots();
+                if (typeof saveMotsData === "function") saveMotsData();
+                afficherListeMotsGestion();
+            }
+        };
+        reader.readAsText(file);
+        // Reset input pour permettre de réimporter le même fichier
+        e.target.value = "";
+    };
+
+    afficherListeMotsGestion();
+    setTimeout(() => {
+        const inputMot = document.getElementById("mot-gestion-mot");
+        if (inputMot) inputMot.focus();
+    }, 100);
+}
+
+// Modifie la fonction d'affichage pour trier par ordre et afficher/modifier le numéro
+function afficherListeMotsGestion() {
+    normaliserOrdreMots();
+    const listDiv = document.getElementById("gestion-mots-list");
+    if (!listDiv) return;
+    listDiv.innerHTML = "";
+    // Trie par ordre croissant
+    const sorted = [...motsData].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+    sorted.forEach((item, sortedIdx) => {
+        const realIdx = motsData.findIndex(m => m.mot === item.mot);
+        const div = document.createElement("div");
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        div.style.marginBottom = "6px";
+        // Flèches haut/bas
+        let upDisabled = sortedIdx === 0 ? "opacity:0.3;pointer-events:none;" : "";
+        let downDisabled = sortedIdx === sorted.length - 1 ? "opacity:0.3;pointer-events:none;" : "";
+        div.innerHTML = `
+            <span style="min-width:36px;text-align:right;font-weight:bold;font-size:1.2em;color:#1976d2;margin-right:8px;">${item.ordre}</span>
+            <button data-up="${realIdx}" title="Monter" style="margin-right:2px;padding:2px 6px;border-radius:6px;background:#e3f2fd;border:1px solid #90caf9;cursor:pointer;${upDisabled}">▲</button>
+            <button data-down="${realIdx}" title="Descendre" style="margin-right:8px;padding:2px 6px;border-radius:6px;background:#e3f2fd;border:1px solid #90caf9;cursor:pointer;${downDisabled}">▼</button>
+            <span style="min-width:90px;font-weight:bold;">${item.mot}</span>
+            <span style="flex:1;margin-left:10px;color:#666;">${item.description || ""}</span>
+            <button data-edit="${realIdx}" style="margin-left:10px;padding:2px 10px;border-radius:6px;background:#e3f2fd;border:1px solid #90caf9;cursor:pointer;">✏️</button>
+            <button data-del="${realIdx}" style="margin-left:6px;padding:2px 10px;border-radius:6px;background:#ffe0e0;border:1px solid #e57373;cursor:pointer;">🗑️</button>
+        `;
+        listDiv.appendChild(div);
+    });
+
+    // Flèche haut
+    listDiv.querySelectorAll("button[data-up]").forEach(btn => {
+        btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute("data-up"), 10);
+            // Trouve l'index dans le trié
+            const sorted = [...motsData].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+            const pos = sorted.findIndex(m => m.mot === motsData[idx].mot);
+            if (pos > 0) {
+                // Échange les ordres avec le précédent
+                const prev = sorted[pos - 1];
+                const curr = sorted[pos];
+                let tmp = prev.ordre;
+                prev.ordre = curr.ordre;
+                curr.ordre = tmp;
+                if (typeof saveMotsData === "function") saveMotsData();
+                afficherListeMotsGestion();
+            }
+        };
+    });
+    // Flèche bas
+    listDiv.querySelectorAll("button[data-down]").forEach(btn => {
+        btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute("data-down"), 10);
+            const sorted = [...motsData].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+            const pos = sorted.findIndex(m => m.mot === motsData[idx].mot);
+            if (pos < sorted.length - 1) {
+                // Échange les ordres avec le suivant
+                const next = sorted[pos + 1];
+                const curr = sorted[pos];
+                let tmp = next.ordre;
+                next.ordre = curr.ordre;
+                curr.ordre = tmp;
+                if (typeof saveMotsData === "function") saveMotsData();
+                afficherListeMotsGestion();
+            }
+        };
+    });
+
+    listDiv.querySelectorAll("button[data-edit]").forEach(btn => {
+        btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute("data-edit"), 10);
+            document.getElementById("mot-gestion-mot").value = motsData[idx].mot;
+            document.getElementById("mot-gestion-desc").value = motsData[idx].description || "";
+
+            document.getElementById("mot-gestion-mot").disabled = true;
+        };
+    });
+    listDiv.querySelectorAll("button[data-del]").forEach(btn => {
+        btn.onclick = function() {
+            const idx = parseInt(btn.getAttribute("data-del"), 10);
+            if (confirm("Supprimer le mot \"" + motsData[idx].mot + "\" ?")) {
+                motsData.splice(idx, 1);
+                if (typeof saveMotsData === "function") saveMotsData();
+                normaliserOrdreMots();
+                afficherListeMotsGestion();
+            }
+        };
+    });
+}
+
+// Ajoute une fonction pour s'assurer que chaque mot a un numéro d'ordre unique et croissant
+function normaliserOrdreMots() {
+    // Si un mot n'a pas d'ordre, on lui en donne un à la suite
+    let maxOrdre = 0;
+    motsData.forEach(m => { if (typeof m.ordre === "number") maxOrdre = Math.max(maxOrdre, m.ordre); });
+    let nextOrdre = maxOrdre + 1;
+    motsData.forEach((m, i) => {
+        if (typeof m.ordre !== "number" || isNaN(m.ordre)) {
+            m.ordre = nextOrdre++;
+        }
+    });
+    // Si doublons, on renumérote tout proprement
+    const ordres = new Set();
+    let needRenumber = false;
+    motsData.forEach(m => {
+        if (ordres.has(m.ordre)) needRenumber = true;
+        ordres.add(m.ordre);
+    });
+    if (needRenumber) {
+        motsData.forEach((m, i) => { m.ordre = i + 1; });
+    }
+}
+
+// Appelle la normalisation au chargement des mots personnalisés
+function loadMotsData() {
+    const val = getCookie && getCookie("motsData");
+    if (val) {
+        try {
+            const arr = JSON.parse(val);
+            if (Array.isArray(arr)) {
+                motsData.length = 0;
+                arr.forEach(obj => motsData.push(obj));
+                normaliserOrdreMots();
+            }
+        } catch(e) {}
+    }
+    normaliserOrdreMots();
 }
