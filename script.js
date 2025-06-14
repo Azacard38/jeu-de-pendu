@@ -29,13 +29,22 @@ let reglagesScore = {
     baseLose: -4,   // Score de base ajouté à la défaite (avant malus)
 };
 
+let motIndex = 0; // Index du mot courant pour le mode ordre
+let ordreAleatoire = false; // false = ordre par défaut, true = aléatoire
+
 function choisirMot() {
-    // Choisit un mot au hasard et réinitialise l'état du jeu (sauf le score général)
+    // Choisit un mot au hasard ou dans l'ordre et réinitialise l'état du jeu (sauf le score général)
     if (!motsData.length) {
         document.getElementById("mot-secret").textContent = "Aucun mot disponible.";
         return;
     }
-    const choix = motsData[Math.floor(Math.random() * motsData.length)];
+    let choix;
+    if (ordreAleatoire) {
+        choix = motsData[Math.floor(Math.random() * motsData.length)];
+    } else {
+        choix = motsData[motIndex % motsData.length];
+        motIndex++;
+    }
     motSecret = choix.mot;
     descriptionMotSecret = choix.description;
     lettresTrouvees = [];
@@ -594,6 +603,8 @@ function verifierFin() {
 }
 
 function afficherAide() {
+    // Ne rien faire si la partie est terminée
+    if (jeuTermine) return;
     // Affiche une lettre non trouvée au hasard
     const lettresRestantes = motSecret.split("").filter(l => !lettresTrouvees.includes(l));
     if (lettresRestantes.length === 0) return;
@@ -758,10 +769,27 @@ window.addEventListener("DOMContentLoaded", function() {
             ouvrirPanelReglageScore();
         };
 
+        // Bouton pour basculer entre ordre et aléatoire
+        const btnOrdre = document.createElement("button");
+        btnOrdre.id = "btn-ordre";
+        btnOrdre.textContent = "Aléatoire"; // Affiche le mode à activer au clic
+        btnOrdre.style.padding = "18px 22px";
+        btnOrdre.style.fontSize = "1.2em";
+        btnOrdre.style.borderRadius = "10px";
+        btnOrdre.style.background = "#fffde7";
+        btnOrdre.style.border = "2px solid #ffe082";
+        btnOrdre.style.cursor = "pointer";
+        btnOrdre.onclick = function() {
+            ordreAleatoire = !ordreAleatoire;
+            btnOrdre.textContent = ordreAleatoire ? "Ordre" : "Aléatoire";
+            motIndex = 0; // reset l'index si on repasse en mode ordre
+        };
+
         leftPanel.appendChild(btnErreur);
         leftPanel.appendChild(btnWin);
         leftPanel.appendChild(btnResetScore);
         leftPanel.appendChild(btnReglageScore);
+        leftPanel.appendChild(btnOrdre);
         document.body.appendChild(leftPanel);
 
         // Ajout du petit bouton flottant pour afficher/masquer le panneau
