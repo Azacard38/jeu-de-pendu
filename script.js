@@ -1,12 +1,10 @@
-const motsData = [
-    { mot: "FILTRE", description: "Nom d'un live.", ordre: 1 },
-    { mot: "SAM", description: "Nom du personnage principal (très simple ;) )", ordre: 2 },
-    { mot: "LILOU", description: "Nom du personnage secondaire", ordre: 3 },
-    { mot: "PRIXROMANFILE", description: "attribu prestigieux attribué à un roman", ordre: 4 },
-    { mot: "DEVILFILTERMAKER", description: "Nom de \"l'antagoniste\"", ordre: 5 },
-    { mot: "FLORENCEHINCKEL", description: "l'autrice", ordre: 6 },
-    { mot: "NATHAN", description: "editeur", ordre: 7 }
-];
+// Import des modules (à placer en haut du fichier)
+import { motsData, choisirMot, ouvrirPanelGestionMots, normaliserOrdreMots } from './mots.js';
+import { reglagesScore, ouvrirPanelReglageScore, calculerBonusAide } from './score.js';
+import { afficherMot, genererClavier, afficherAnimationVictoire, afficherAnimationDefaite } from './ui.js';
+import { setupDebugPanel } from './debug.js';
+import { saveMotsData, loadMotsData } from './storage.js';
+
 let motSecret = "";
 let descriptionMotSecret = "";
 let lettresTrouvees = [];
@@ -25,7 +23,7 @@ let reglagesScore = {
     malus0: 2,      // Malus ajouté à la défaite si 0% d'aide utilisée
     malus50: -7,    // Malus ajouté à la défaite si 50% d'aide utilisée
     malus100: -8,   // Malus ajouté à la défaite si 100% d'aide utilisée
-    baseWin: 5,     // Score de base ajouté à la victoire (avant bonus)
+    baseWin: 8,     // Score de base ajouté à la victoire (avant bonus)
     baseLose: -4,   // Score de base ajouté à la défaite (avant malus)
 };
 
@@ -82,7 +80,7 @@ function choisirMot() {
         const btnDesc = document.createElement("button");
         btnDesc.id = "btn-description";
         btnDesc.textContent = "Afficher la description";
-        btnDesc.style.margin = "10px 0 0 0";
+        btnDesc.style.margin = "450px 0 0 0";
         btnDesc.style.background = "#f5f5f5";
         btnDesc.style.border = "2px solid #bbb";
         btnDesc.style.borderRadius = "10px";
@@ -431,7 +429,7 @@ function afficherAnimationVictoire() {
    \\O/          |
     |           |
    / \\          |
-                |    o/
+                |    ^_^
                 |
     =======================`
     ];
@@ -617,7 +615,7 @@ function afficherAide() {
         if (!lettresJouees.includes(lettreAide)) {
             lettresJouees.push(lettreAide);
         }
-        // score -= 0.5; // Retiré : ne perds plus de point avec l'aide
+        score -= 0.5; // Retiré : ne perds plus de point avec l'aide
         scoreAide += 0.5; // +0.5 au score d'aide
         lettresAide += 1; // +1 lettre trouvée grâce à l'aide
         majScore();
@@ -699,7 +697,7 @@ window.addEventListener("DOMContentLoaded", function() {
         leftPanel.style.position = "fixed";
         leftPanel.style.left = "24px";
         leftPanel.style.top = "120px";
-        leftPanel.style.display = "none"; // caché par défaut
+        leftPanel.style.display = "none";
         leftPanel.style.flexDirection = "column";
         leftPanel.style.gap = "18px";
         leftPanel.style.zIndex = "100";
@@ -760,20 +758,6 @@ window.addEventListener("DOMContentLoaded", function() {
             }
         };
 
-        // Bouton pour ouvrir le panneau de réglages score
-        const btnReglageScore = document.createElement("button");
-        btnReglageScore.id = "btn-reglage-score";
-        btnReglageScore.textContent = "Réglages score";
-        btnReglageScore.style.padding = "18px 22px";
-        btnReglageScore.style.fontSize = "1.2em";
-        btnReglageScore.style.borderRadius = "10px";
-        btnReglageScore.style.background = "#fffde7";
-        btnReglageScore.style.border = "2px solid #ffe082";
-        btnReglageScore.style.cursor = "pointer";
-        btnReglageScore.onclick = function() {
-            ouvrirPanelReglageScore();
-        };
-
         // Bouton pour basculer entre ordre et aléatoire
         const btnOrdre = document.createElement("button");
         btnOrdre.id = "btn-ordre";
@@ -790,11 +774,100 @@ window.addEventListener("DOMContentLoaded", function() {
             motIndex = 0; // reset l'index si on repasse en mode ordre
         };
 
+        // Nouveau bouton "Gestion" principal
+        const btnGestion = document.createElement("div");
+        btnGestion.style.position = "relative";
+        btnGestion.style.display = "inline-block";
+
+        const btnGestionMain = document.createElement("button");
+        btnGestionMain.id = "btn-gestion-main";
+        btnGestionMain.textContent = "Gestion";
+        btnGestionMain.style.padding = "18px 22px";
+        btnGestionMain.style.fontSize = "1.2em";
+        btnGestionMain.style.borderRadius = "10px";
+        btnGestionMain.style.background = "#ffd54f";
+        btnGestionMain.style.border = "2px solid #bbb";
+        btnGestionMain.style.cursor = "pointer";
+        btnGestionMain.style.marginBottom = "8px";
+        btnGestionMain.onmouseover = showGestionMenu;
+        btnGestionMain.onmouseout = hideGestionMenuDelayed;
+
+        // Sous-menu qui apparaît au survol
+        const gestionMenu = document.createElement("div");
+        gestionMenu.id = "gestion-menu";
+        gestionMenu.style.position = "absolute";
+        gestionMenu.style.left = "110%";
+        gestionMenu.style.top = "0";
+        gestionMenu.style.display = "none";
+        gestionMenu.style.flexDirection = "column";
+        gestionMenu.style.gap = "8px";
+        gestionMenu.style.background = "#fffde7";
+        gestionMenu.style.border = "1px solid #bbb";
+        gestionMenu.style.borderRadius = "10px";
+        gestionMenu.style.boxShadow = "0 2px 8px #0002";
+        gestionMenu.style.padding = "8px 0";
+        gestionMenu.style.zIndex = "1000";
+        gestionMenu.onmouseover = showGestionMenu;
+        gestionMenu.onmouseout = hideGestionMenuDelayed;
+
+        // Bouton "Réglages score"
+        const btnReglageScore = document.createElement("button");
+        btnReglageScore.id = "btn-reglage-score";
+        btnReglageScore.textContent = "Réglages score";
+        btnReglageScore.style.padding = "10px 22px";
+        btnReglageScore.style.fontSize = "1em";
+        btnReglageScore.style.borderRadius = "8px";
+        btnReglageScore.style.background = "#fffde7";
+        btnReglageScore.style.border = "1px solid #ffe082";
+        btnReglageScore.style.cursor = "pointer";
+        btnReglageScore.onclick = function(e) {
+            e.stopPropagation();
+            ouvrirPanelReglageScore();
+            gestionMenu.style.display = "none";
+        };
+
+        // Bouton "Gestion mots"
+        const btnOpenGestion = document.createElement("button");
+        btnOpenGestion.id = "btn-open-gestion-mots";
+        btnOpenGestion.textContent = "Gestion mots";
+        btnOpenGestion.style.padding = "10px 22px";
+        btnOpenGestion.style.fontSize = "1em";
+        btnOpenGestion.style.borderRadius = "8px";
+        btnOpenGestion.style.background = "#ffd54f";
+        btnOpenGestion.style.border = "1px solid #bbb";
+        btnOpenGestion.style.cursor = "pointer";
+        btnOpenGestion.onclick = function(e) {
+            e.stopPropagation();
+            ouvrirPanelGestionMots();
+            gestionMenu.style.display = "none";
+        };
+
+        gestionMenu.appendChild(btnReglageScore);
+        gestionMenu.appendChild(btnOpenGestion);
+
+        btnGestion.appendChild(btnGestionMain);
+        btnGestion.appendChild(gestionMenu);
+
+        // Gestion du survol pour afficher/cacher le menu
+        let gestionMenuTimeout;
+        function showGestionMenu() {
+            clearTimeout(gestionMenuTimeout);
+            gestionMenu.style.display = "flex";
+        }
+        function hideGestionMenuDelayed() {
+            gestionMenuTimeout = setTimeout(() => {
+                gestionMenu.style.display = "none";
+            }, 250);
+        }
+
+        leftPanel.appendChild(btnGestion);
+
+        // ...ajout des autres boutons...
         leftPanel.appendChild(btnErreur);
         leftPanel.appendChild(btnWin);
         leftPanel.appendChild(btnResetScore);
-        leftPanel.appendChild(btnReglageScore);
         leftPanel.appendChild(btnOrdre);
+
         document.body.appendChild(leftPanel);
 
         // Ajout du petit bouton flottant pour afficher/masquer le panneau
@@ -826,27 +899,11 @@ window.addEventListener("DOMContentLoaded", function() {
             document.body.appendChild(toggleBtn);
         }
     }
-    // Ajoute un bouton flottant TOUJOURS visible pour accéder au menu de gestion des mots
-    if (!document.getElementById("btn-open-gestion-mots")) {
-        const btnOpenGestion = document.createElement("button");
-        btnOpenGestion.id = "btn-open-gestion-mots";
-        btnOpenGestion.textContent = "Gestion mots";
-        btnOpenGestion.style.position = "fixed";
-        btnOpenGestion.style.left = "10px";
-        btnOpenGestion.style.top = "60px";
-        btnOpenGestion.style.width = "120px";
-        btnOpenGestion.style.height = "40px";
-        btnOpenGestion.style.borderRadius = "12px";
-        btnOpenGestion.style.background = "#ffd54f";
-        btnOpenGestion.style.border = "2px solid #bbb";
-        btnOpenGestion.style.fontSize = "1.1em";
-        btnOpenGestion.style.cursor = "pointer";
-        btnOpenGestion.style.zIndex = "9999";
-        btnOpenGestion.style.boxShadow = "0 2px 8px #0002";
-        btnOpenGestion.onclick = function() {
-            ouvrirPanelGestionMots();
-        };
-        document.body.appendChild(btnOpenGestion);
+
+    // Supprime le bouton gestion mots flottant s'il existe déjà ailleurs (pour éviter doublon)
+    const oldGestionBtn = document.getElementById("btn-open-gestion-mots");
+    if (oldGestionBtn && oldGestionBtn.parentNode !== document.getElementById("gestion-menu")) {
+        oldGestionBtn.parentNode.removeChild(oldGestionBtn);
     }
 });
 
@@ -1203,3 +1260,32 @@ function loadMotsData() {
     }
     normaliserOrdreMots();
 }
+
+// Amélioration 1 : Séparation du code en modules/fichiers pour la lisibilité et la maintenance
+// Voici une suggestion de découpage :
+
+// 1. script.js (fichier principal, point d'entrée)
+// 2. mots.js (gestion de la liste des mots, import/export, normalisation, gestion ordre, etc.)
+// 3. score.js (calculs de score, réglages, panneau de réglages, etc.)
+// 4. ui.js (affichage, génération du clavier, animations, gestion des panneaux, etc.)
+// 5. debug.js (boutons et panneau debug, gestion du mode debug)
+// 6. storage.js (sauvegarde/chargement localStorage/cookies)
+
+// Exemple d'import (si vous utilisez des modules ES6) :
+// import { motsData, choisirMot, ouvrirPanelGestionMots, normaliserOrdreMots } from './mots.js';
+// import { reglagesScore, ouvrirPanelReglageScore, calculerBonusAide } from './score.js';
+// import { afficherMot, genererClavier, afficherAnimationVictoire, afficherAnimationDefaite } from './ui.js';
+// import { setupDebugPanel } from './debug.js';
+// import { saveMotsData, loadMotsData } from './storage.js';
+
+// Pour utiliser ce découpage, il faut :
+// - Créer les fichiers correspondants (mots.js, score.js, ui.js, debug.js, storage.js)
+// - Remplacer les fonctions globales par des exports/imports
+// - Charger le script principal (script.js) en dernier dans votre HTML
+
+// Avantages :
+// - Code plus lisible, plus facile à maintenir
+// - Possibilité de réutiliser ou tester chaque module séparément
+// - Plus simple pour travailler à plusieurs sur le projet
+// - Possibilité de réutiliser ou tester chaque module séparément
+// - Plus simple pour travailler à plusieurs sur le projet
