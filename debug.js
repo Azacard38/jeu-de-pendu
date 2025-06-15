@@ -1,3 +1,0 @@
-export function setupDebugPanel() {
-    // ...code pour initialiser le panneau debug et les boutons...
-}

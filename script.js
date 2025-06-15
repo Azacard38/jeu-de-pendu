@@ -1,10 +1,12 @@
-// Import des modules (à placer en haut du fichier)
-import { motsData, choisirMot, ouvrirPanelGestionMots, normaliserOrdreMots } from './mots.js';
-import { reglagesScore, ouvrirPanelReglageScore, calculerBonusAide } from './score.js';
-import { afficherMot, genererClavier, afficherAnimationVictoire, afficherAnimationDefaite } from './ui.js';
-import { setupDebugPanel } from './debug.js';
-import { saveMotsData, loadMotsData } from './storage.js';
-
+const motsData = [
+    { mot: "FILTRE", description: "Nom d'un live.", ordre: 1 },
+    { mot: "SAM", description: "Nom du personnage principal (très simple ;) )", ordre: 2 },
+    { mot: "LILOU", description: "Nom du personnage secondaire", ordre: 3 },
+    { mot: "PRIXROMANFILE", description: "attribu prestigieux attribué à un roman", ordre: 4 },
+    { mot: "DEVILFILTERMAKER", description: "Nom de \"l'antagoniste\"", ordre: 5 },
+    { mot: "FLORENCEHINCKEL", description: "l'autrice", ordre: 6 },
+    { mot: "NATHAN", description: "editeur", ordre: 7 }
+];
 let motSecret = "";
 let descriptionMotSecret = "";
 let lettresTrouvees = [];
@@ -1260,32 +1262,3 @@ function loadMotsData() {
     }
     normaliserOrdreMots();
 }
-
-// Amélioration 1 : Séparation du code en modules/fichiers pour la lisibilité et la maintenance
-// Voici une suggestion de découpage :
-
-// 1. script.js (fichier principal, point d'entrée)
-// 2. mots.js (gestion de la liste des mots, import/export, normalisation, gestion ordre, etc.)
-// 3. score.js (calculs de score, réglages, panneau de réglages, etc.)
-// 4. ui.js (affichage, génération du clavier, animations, gestion des panneaux, etc.)
-// 5. debug.js (boutons et panneau debug, gestion du mode debug)
-// 6. storage.js (sauvegarde/chargement localStorage/cookies)
-
-// Exemple d'import (si vous utilisez des modules ES6) :
-// import { motsData, choisirMot, ouvrirPanelGestionMots, normaliserOrdreMots } from './mots.js';
-// import { reglagesScore, ouvrirPanelReglageScore, calculerBonusAide } from './score.js';
-// import { afficherMot, genererClavier, afficherAnimationVictoire, afficherAnimationDefaite } from './ui.js';
-// import { setupDebugPanel } from './debug.js';
-// import { saveMotsData, loadMotsData } from './storage.js';
-
-// Pour utiliser ce découpage, il faut :
-// - Créer les fichiers correspondants (mots.js, score.js, ui.js, debug.js, storage.js)
-// - Remplacer les fonctions globales par des exports/imports
-// - Charger le script principal (script.js) en dernier dans votre HTML
-
-// Avantages :
-// - Code plus lisible, plus facile à maintenir
-// - Possibilité de réutiliser ou tester chaque module séparément
-// - Plus simple pour travailler à plusieurs sur le projet
-// - Possibilité de réutiliser ou tester chaque module séparément
-// - Plus simple pour travailler à plusieurs sur le projet
